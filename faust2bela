@@ -1,0 +1,18 @@
+#!/bin/bash
+
+FILENAME=$1
+CLASSNAME=`basename $FILENAME .dsp`
+OUTPUTFILE="render.cpp"
+
+#echo $FILENAME $CLASSNAME $PATCHNAME $PATCHFILE
+
+faust -i -a bela.cpp -cn $CLASSNAME $FILENAME -o $OUTPUTFILE
+#echo ""         
+#echo "           Instructions to build $PATCHFILE on your beaglebone black"
+#echo ""         
+#echo ""
+
+
+
+
+
