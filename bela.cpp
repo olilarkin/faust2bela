@@ -180,8 +180,6 @@ protected:
       case kANALOG_6:
       case kANALOG_7:
         *fZone = fMin + fRange * analogReadFrame(context, 0 /* TODO: average frame?*/, (int) fBelaPin);
-                  rt_printf("pin %f\n", *fZone );
-
         break;
       case kDIGITAL_0:
       case kDIGITAL_1:
