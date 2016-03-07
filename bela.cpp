@@ -389,7 +389,7 @@ void render(BeagleRTContext *context, void *userData)
           if(ch >= context->audioChannels) // handle analogChannels
           {
             unsigned int m = frame/2;
-            context->analogOut[m * context->analogFrames + (ch-context->audioChannels)] = constrain(gOutputBuffers[ch*context->audioFrames + frame], 0.0f, 1.0f );
+            context->analogOut[m * context->analogFrames + (ch-context->audioChannels)] = gOutputBuffers[ch*context->audioFrames + frame];
           } 
           else // handle audioChannels
           {
