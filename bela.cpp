@@ -403,6 +403,10 @@ void render(BeagleRTContext *context, void *userData)
 
 void cleanup(BeagleRTContext *context, void *userData)
 {
+  if(gInputBuffers != NULL)
+    free(gInputBuffers);
+  if(gOutputBuffers != NULL)
+    free(gOutputBuffers);
 }
 
 
