@@ -309,10 +309,11 @@ class BelaUI : public UI
 
 unsigned int gNumBuffers = 0; // the number of de-interleaved buffers for audio and analog i/o
 float *gInputBuffers = NULL, *gOutputBuffers = NULL; //de-interleaved input/output buffers for the audio and analog inputs
+float* gFaustIns[32]; // array of pointers to gInputBuffer data
+float* gFaustOuts[32]; // array of pointers to gOutputBuffers data
 mydsp fDSP;
 BelaUI fUI;
 
-//render.cpp
 bool setup(BeagleRTContext *context, void *userData)
 {
   gNumBuffers = context->audioChannels + context->analogChannels;
@@ -327,12 +328,22 @@ bool setup(BeagleRTContext *context, void *userData)
   gInputBuffers = (float *) malloc(gNumBuffers * context->audioFrames * sizeof(float));
   gOutputBuffers = (float *) malloc(gNumBuffers * context->audioFrames * sizeof(float));
   
+  assert(fDSP.getNumInputs() < 32);
+  assert(fDSP.getNumOutputs() < 32);
+
+  // create the table of input channels
+  for(int ch=0; ch<fDSP.getNumInputs(); ++ch)
+    gFaustIns[ch] = gInputBuffers + (ch * context->audioFrames);
+  
+  // create the table of output channels
+  for(int ch=0; ch<fDSP.getNumOutputs(); ++ch)
+    gFaustOuts[ch] = gOutputBuffers + (ch * context->audioFrames);
+  
   return true;
 }
 
 void render(BeagleRTContext *context, void *userData)
 {
-
   // De-interleave the input data
   if(gInputBuffers != NULL)
   {
@@ -355,25 +366,11 @@ void render(BeagleRTContext *context, void *userData)
       }
     }
   }
-
-  float*  ins[32];
-  float*  outs[32];
-
-  assert(fDSP.getNumInputs() < 32);
-  assert(fDSP.getNumOutputs() < 32);
-
-  // create the table of input channels
-  for(int ch=0; ch<fDSP.getNumInputs(); ++ch)
-    ins[ch] = gInputBuffers + (ch * context->audioFrames);
-  
-  // create the table of output channels
-  for(int ch=0; ch<fDSP.getNumOutputs(); ++ch)
-    outs[ch] = gOutputBuffers + (ch * context->audioFrames);
     
   // reads Bela pins and updates corresponding Faust Widgets zones
   fUI.update(context); 
   // Process FAUST DSP
-  fDSP.compute(context->audioFrames, ins, outs);
+  fDSP.compute(context->audioFrames, gFaustIns, gFaustOuts);
   
   // Interleave the output data
   if(gOutputBuffers != NULL)
