@@ -48,7 +48,6 @@
 #include <string>
 #include <math.h>
 #include <strings.h>
-#include <assert.h>
 #include <cstdlib>
 #include <BeagleRT.h>
 #include <Utilities.h>
@@ -328,9 +327,11 @@ bool setup(BeagleRTContext *context, void *userData)
   gInputBuffers = (float *) malloc(gNumBuffers * context->audioFrames * sizeof(float));
   gOutputBuffers = (float *) malloc(gNumBuffers * context->audioFrames * sizeof(float));
   
-  assert(fDSP.getNumInputs() < 32);
-  assert(fDSP.getNumOutputs() < 32);
-
+  if(fDSP.getNumInputs() > 32 || fDSP.getNumOutputs() > 32)
+  {
+    rt_printf("setup() failed: FAUST DSP has too many i/o");
+    return false;
+  } 
   // create the table of input channels
   for(int ch=0; ch<fDSP.getNumInputs(); ++ch)
     gFaustIns[ch] = gInputBuffers + (ch * context->audioFrames);
