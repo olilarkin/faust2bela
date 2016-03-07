@@ -308,8 +308,8 @@ class BelaUI : public UI
 
 unsigned int gNumBuffers = 0; // the number of de-interleaved buffers for audio and analog i/o
 float *gInputBuffers = NULL, *gOutputBuffers = NULL; //de-interleaved input/output buffers for the audio and analog inputs
-float* gFaustIns[32]; // array of pointers to gInputBuffer data
-float* gFaustOuts[32]; // array of pointers to gOutputBuffers data
+float* gFaustIns[10]; // array of pointers to gInputBuffer data
+float* gFaustOuts[10]; // array of pointers to gOutputBuffers data
 mydsp fDSP;
 BelaUI fUI;
 
@@ -333,7 +333,7 @@ bool setup(BeagleRTContext *context, void *userData)
     return false;
   }
   
-  if(fDSP.getNumInputs() > 32 || fDSP.getNumOutputs() > 32)
+  if(fDSP.getNumInputs() > 10 || fDSP.getNumOutputs() > 10)
   {
     rt_printf("setup() failed: FAUST DSP has too many i/o");
     return false;
