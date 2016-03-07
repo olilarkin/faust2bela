@@ -327,6 +327,12 @@ bool setup(BeagleRTContext *context, void *userData)
   gInputBuffers = (float *) malloc(gNumBuffers * context->audioFrames * sizeof(float));
   gOutputBuffers = (float *) malloc(gNumBuffers * context->audioFrames * sizeof(float));
   
+  if(gInputBuffers == NULL || gOutputBuffers == NULL)
+  {
+    rt_printf("setup() failed: couldn't allocated buffers");
+    return false;
+  }
+  
   if(fDSP.getNumInputs() > 32 || fDSP.getNumOutputs() > 32)
   {
     rt_printf("setup() failed: FAUST DSP has too many i/o");
@@ -346,24 +352,21 @@ bool setup(BeagleRTContext *context, void *userData)
 void render(BeagleRTContext *context, void *userData)
 {
   // De-interleave the input data
-  if(gInputBuffers != NULL)
+  for(unsigned int frame = 0; frame < context->audioFrames; frame++)
   {
-    for(unsigned int frame = 0; frame < context->audioFrames; frame++)
+    for(unsigned int ch = 0; ch < gNumBuffers; ch++)
     {
-      for(unsigned int ch = 0; ch < gNumBuffers; ch++)
+      if(ch >= context->audioChannels+context->analogChannels)
+        break;
+      if(ch >= context->audioChannels) // handle analogChannels
       {
-        if(ch >= context->audioChannels+context->analogChannels)
-          break;
-        if(ch >= context->audioChannels) // handle analogChannels
-        {
-          unsigned int m = frame/2;
-          float mIn = (float) context->audioIn[m * context->analogChannels + (ch-context->audioChannels)];
-          gInputBuffers[ch * context->audioFrames + frame] = mIn;
-        }
-        else // handle audioChannels
-        {
-          gInputBuffers[ch * context->audioFrames + frame] = context->audioIn[frame * context->audioChannels + ch];
-        }
+        unsigned int m = frame/2;
+        float mIn = (float) context->audioIn[m * context->analogChannels + (ch-context->audioChannels)];
+        gInputBuffers[ch * context->audioFrames + frame] = mIn;
+      }
+      else // handle audioChannels
+      {
+        gInputBuffers[ch * context->audioFrames + frame] = context->audioIn[frame * context->audioChannels + ch];
       }
     }
   }
@@ -374,25 +377,22 @@ void render(BeagleRTContext *context, void *userData)
   fDSP.compute(context->audioFrames, gFaustIns, gFaustOuts);
   
   // Interleave the output data
-  if(gOutputBuffers != NULL)
+  for(unsigned int frame = 0; frame < context->audioFrames; frame++)
   {
-    for(unsigned int frame = 0; frame < context->audioFrames; frame++)
+    for(unsigned int ch = 0; ch < gNumBuffers; ch++)
     {
-      for(unsigned int ch = 0; ch < gNumBuffers; ch++)
+      if(ch >= context->audioChannels+context->analogChannels) 
+        break;
+      else 
       {
-        if(ch >= context->audioChannels+context->analogChannels) 
-          break;
-        else 
+        if(ch >= context->audioChannels) // handle analogChannels
         {
-          if(ch >= context->audioChannels) // handle analogChannels
-          {
-            unsigned int m = frame/2;
-            context->analogOut[m * context->analogFrames + (ch-context->audioChannels)] = gOutputBuffers[ch*context->audioFrames + frame];
-          } 
-          else // handle audioChannels
-          {
-            context->audioOut[frame * context->audioChannels + ch] = gOutputBuffers[ch * context->audioFrames + frame];
-          }
+          unsigned int m = frame/2;
+          context->analogOut[m * context->analogFrames + (ch-context->audioChannels)] = gOutputBuffers[ch*context->audioFrames + frame];
+        } 
+        else // handle audioChannels
+        {
+          context->audioOut[frame * context->audioChannels + ch] = gOutputBuffers[ch * context->audioFrames + frame];
         }
       }
     }
